@@ -1,0 +1,36 @@
+name: observed
+version: 0.1.0
+synopsis: Generate representative observabiliy data to demonstrate traces and spans
+author: Andrew Cowie <istathar@gmail.com>
+maintainer: Andrew Cowie <istathar@gmail.com>
+copyright: © 2017-2024 Athae Eredh Siniath and Others
+license: MIT
+tested-with: GHC == 9.4.8
+
+ghc-options: -Wall -Wwarn -fwarn-tabs
+
+dependencies:
+  - base
+  - core-data
+  - core-text >= 0.3.2
+  - core-program >= 0.7.0
+  - core-telemetry
+
+executables:
+  hello:
+    source-dirs:
+      - src
+    main: HelloMain.hs
+    ghc-options:
+    - -threaded
+    other-modules: []
+
+tests:
+  check:
+    dependencies:
+      - hspec
+    ghc-options: -threaded
+    source-dirs:
+      - tests
+    main: TestSuite.hs
+    other-modules: []

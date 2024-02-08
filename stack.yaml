@@ -1,0 +1,16 @@
+resolver: lts-21.25
+compiler: ghc-9.4.8
+packages:
+- .
+
+extra-deps:
+#
+# there was actually no immediate reason to depend on the latest versions of
+# these libraries other than to show the way you add specific versions to your
+# Stack resolver if you need something newer than what is in the snaphot above.
+#
+
+- core-data-0.3.9.1
+- core-program-0.7.0.0
+- core-text-0.3.8.1
+- core-telemetry-0.2.9.4
