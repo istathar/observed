@@ -40,19 +40,18 @@ program = do
     forM_ [(1 :: Int) ..] $ \i -> do
         beginTrace $ do
             encloseSpan "The Top" $ do
+                info "Beginning iteration"
                 sleepThread 1
-                info "Hello"
+                write "Hello"
 
                 encloseSpan "The Middle" $ do
                     sleepThread 1
-                    info "World"
+                    write "World"
 
-                    encloseSpan "The Bottom" $ do
-                        sleepThread 1
-                        info "Goodbye"
+                    activity "The Bottom"
 
                 telemetry
-                    [ metric "level" ("INFO" :: Rope)
+                    [ metric "loglevel" ("INFO" :: Rope)
                     , metric "iteration" i
                     ]
 
@@ -60,7 +59,43 @@ program = do
         -- Now sleep a small amount of time before simulating the next event.
         --
 
+        info "Sleeping"
         delay <- liftIO $ do
             randomRIO (1, 10 :: Int)
-
+        debugS "delay" delay
         sleepThread (fromIntegral delay)
+
+activity :: Rope -> Program None ()
+activity label = do
+    encloseSpan label $ do
+        info "Performing activity"
+        raceThreads_
+            ( do
+                delay <- liftIO $ do
+                    randomRIO (4.0, 6.0 :: Float)
+                debugS "working" delay
+                sleepThread (toRational delay)
+
+                write "Goodbye"
+                telemetry
+                    [ metric "loglevel" ("INFO" :: Rope)
+                    ]
+            )
+            ( do
+                delay <- liftIO $ do
+                    randomRIO (0.0, 10.0 :: Float)
+                debugS "kabooma" delay
+                sleepThread (toRational delay)
+
+                let e = ActivityFailed
+                telemetry
+                    [ metric "error" (show e)
+                    , metric "loglevel" ("ERROR" :: Rope)
+                    ]
+                throw e
+            )
+
+data StepProblem = ActivityFailed
+    deriving (Show)
+
+instance Exception StepProblem
