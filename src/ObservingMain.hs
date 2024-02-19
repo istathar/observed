@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
@@ -32,38 +33,56 @@ program :: Program None ()
 program = do
     info "Setting up"
 
+    --
+    -- Establish global context we want to be on every span.
+    --
+
     telemetry
         [ metric "build.version" (versionNumberFrom version)
         , metric "build.commit" (gitDescriptionFrom version)
         ]
 
+    --
+    -- Loop forever.
+    --
+
     forM_ [(1 :: Int) ..] $ \i -> do
+        --
+        -- Simulate an event
+        --
+
         beginTrace $ do
             encloseSpan "The Top" $ do
-                info "Beginning iteration"
-                sleepThread 1
-                write "Hello"
+                catch
+                    ( do
+                        info "Beginning iteration"
+                        sleepThread 1
+                        write "Hello"
 
-                encloseSpan "The Middle" $ do
-                    sleepThread 1
-                    write "World"
+                        encloseSpan "The Middle" $ do
+                            sleepThread 1
+                            write "World"
 
-                    activity "The Bottom"
+                            activity "The Bottom"
+                    )
+                    ( \(_ :: StepProblem) -> do
+                        warn "Activity failed"
+                    )
 
                 telemetry
-                    [ metric "loglevel" ("INFO" :: Rope)
+                    [ metric "level" ("INFO" :: Rope)
                     , metric "iteration" i
                     ]
 
         --
-        -- Now sleep a small amount of time before simulating the next event.
+        -- Sleep a small amount of time before simulating the next event.
         --
 
         info "Sleeping"
         delay <- liftIO $ do
-            randomRIO (1, 10 :: Int)
+            randomRIO (1.0, 5.0 :: Float)
         debugS "delay" delay
-        sleepThread (fromIntegral delay)
+        sleepThread (toRational delay)
 
 activity :: Rope -> Program None ()
 activity label = do
@@ -78,7 +97,7 @@ activity label = do
 
                 write "Goodbye"
                 telemetry
-                    [ metric "loglevel" ("INFO" :: Rope)
+                    [ metric "level" ("INFO" :: Rope)
                     ]
             )
             ( do
@@ -90,7 +109,7 @@ activity label = do
                 let e = ActivityFailed
                 telemetry
                     [ metric "error" (show e)
-                    , metric "loglevel" ("ERROR" :: Rope)
+                    , metric "level" ("ERROR" :: Rope)
                     ]
                 throw e
             )
