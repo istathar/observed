@@ -7,8 +7,10 @@ module Main where
 
 import Control.Monad (forM_)
 import Core.Program
+import Core.System
 import Core.Telemetry
 import Core.Text
+import System.Random (randomRIO)
 
 version :: Version
 version = $(fromPackage)
@@ -39,17 +41,26 @@ program = do
         beginTrace $ do
             encloseSpan "The Top" $ do
                 sleepThread 1
-                write "Hello"
+                info "Hello"
 
                 encloseSpan "The Middle" $ do
                     sleepThread 1
-                    write "World"
+                    info "World"
 
                     encloseSpan "The Bottom" $ do
                         sleepThread 1
-                        write "Goodbye"
+                        info "Goodbye"
 
                 telemetry
                     [ metric "level" ("INFO" :: Rope)
                     , metric "iteration" i
                     ]
+
+        --
+        -- Now sleep a small amount of time before simulating the next event.
+        --
+
+        delay <- liftIO $ do
+            randomRIO (1, 10 :: Int)
+
+        sleepThread (fromIntegral delay)

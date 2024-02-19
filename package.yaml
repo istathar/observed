@@ -1,5 +1,5 @@
 name: observed
-version: 0.1.0
+version: 0.1.1
 synopsis: Generate representative observabiliy data to demonstrate traces and spans
 author: Andrew Cowie <istathar@gmail.com>
 maintainer: Andrew Cowie <istathar@gmail.com>
@@ -15,6 +15,7 @@ dependencies:
   - core-text >= 0.3.2
   - core-program >= 0.7.0
   - core-telemetry
+  - random
 
 executables:
   observing:
