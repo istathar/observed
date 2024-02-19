@@ -58,15 +58,22 @@ program = do
                     ( do
                         info "Beginning iteration"
                         sleepThread 1
-                        write "Hello"
 
                         encloseSpan "The Middle" $ do
                             sleepThread 1
-                            write "World"
 
                             activity
-                                "The Bottom"
+                                "Actual Work 1"
                                 (randomNap (4.0, 6.0))
+
+                            activity
+                                "Actual Work 2"
+                                (randomNap (0.1, 0.9))
+
+                            activity
+                                "Actual Work 3"
+                                (randomNap (1.0, 3.0))
+
                     )
                     ( \(_ :: StepProblem) -> do
                         warn "Activity failed"
