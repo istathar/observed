@@ -5,8 +5,10 @@
 
 module Main where
 
+import Control.Monad (forM_)
 import Core.Program
 import Core.Telemetry
+import Core.Text
 
 version :: Version
 version = $(fromPackage)
@@ -33,6 +35,21 @@ program = do
         , metric "build.commit" (gitDescriptionFrom version)
         ]
 
-    beginTrace $ do
-        encloseSpan "The Top" $ do
-            write "Hello World"
+    forM_ [(1 :: Int) ..] $ \i -> do
+        beginTrace $ do
+            encloseSpan "The Top" $ do
+                sleepThread 1
+                write "Hello"
+
+                encloseSpan "The Middle" $ do
+                    sleepThread 1
+                    write "World"
+
+                    encloseSpan "The Bottom" $ do
+                        sleepThread 1
+                        write "Goodbye"
+
+                telemetry
+                    [ metric "level" ("INFO" :: Rope)
+                    , metric "iteration" i
+                    ]
