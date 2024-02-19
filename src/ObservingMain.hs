@@ -40,6 +40,7 @@ program = do
     telemetry
         [ metric "build.version" (versionNumberFrom version)
         , metric "build.commit" (gitDescriptionFrom version)
+        , metric "level" ("INFO" :: Rope)
         ]
 
     --
@@ -63,7 +64,9 @@ program = do
                             sleepThread 1
                             write "World"
 
-                            activity "The Bottom"
+                            activity
+                                "The Bottom"
+                                (randomNap (4.0, 6.0))
                     )
                     ( \(_ :: StepProblem) -> do
                         warn "Activity failed"
@@ -84,37 +87,40 @@ program = do
         debugS "delay" delay
         sleepThread (toRational delay)
 
-activity :: Rope -> Program None ()
-activity label = do
+activity :: Rope -> Program None () -> Program None ()
+activity label subprogram = do
     encloseSpan label $ do
         info "Performing activity"
         raceThreads_
             ( do
-                delay <- liftIO $ do
-                    randomRIO (4.0, 6.0 :: Float)
-                debugS "working" delay
-                sleepThread (toRational delay)
-
-                write "Goodbye"
-                telemetry
-                    [ metric "level" ("INFO" :: Rope)
-                    ]
+                subprogram
             )
             ( do
-                delay <- liftIO $ do
-                    randomRIO (0.0, 10.0 :: Float)
-                debugS "kabooma" delay
-                sleepThread (toRational delay)
-
-                let e = ActivityFailed
-                telemetry
-                    [ metric "error" (show e)
-                    , metric "level" ("ERROR" :: Rope)
-                    ]
-                throw e
+                randomFailure (0.0, 10.0)
             )
 
 data StepProblem = ActivityFailed
     deriving (Show)
 
 instance Exception StepProblem
+
+randomNap :: (Float, Float) -> Program None ()
+randomNap range = do
+    delay <- liftIO $ do
+        randomRIO range
+    debugS "work" delay
+    sleepThread (toRational delay)
+
+randomFailure :: (Float, Float) -> Program None ()
+randomFailure range = do
+    delay <- liftIO $ do
+        randomRIO range
+    debugS "boom" delay
+    sleepThread (toRational delay)
+
+    let e = ActivityFailed
+    telemetry
+        [ metric "error" (show e)
+        , metric "level" ("ERROR" :: Rope)
+        ]
+    throw e
