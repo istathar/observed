@@ -17,10 +17,10 @@ dependencies:
   - core-telemetry
 
 executables:
-  hello:
+  observing:
     source-dirs:
       - src
-    main: HelloMain.hs
+    main: ObservingMain.hs
     ghc-options:
     - -threaded
     other-modules: []
